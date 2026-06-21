@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rolence Money Tracker</title>
+<meta name="description" content="A premium personal finance dashboard — track balance, expenses and spending insights, all in your browser." />
+
+<!-- Fonts: Sora (display), Inter (body), JetBrains Mono (figures) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============================================================
+     FIRST-TIME SETUP SCREEN
+============================================================ -->
+<div id="setupScreen" class="setup-screen">
+  <div class="setup-card">
+    <div class="setup-brand">
+      <div class="setup-logo">RM</div>
+      <h1>Rolence Money Tracker</h1>
+      <p>Your personal finance, beautifully tracked.</p>
+    </div>
+
+    <form id="setupForm" class="setup-form" novalidate>
+      <div class="field">
+        <label for="setupName">Your name</label>
+        <input type="text" id="setupName" name="setupName" placeholder="e.g. Rolence" autocomplete="off" required />
+        <span class="field-error" id="setupNameError"></span>
+      </div>
+
+      <div class="field">
+        <label for="setupBalance">Starting balance (TZS)</label>
+        <input type="number" id="setupBalance" name="setupBalance" placeholder="e.g. 500000" min="0" step="1" inputmode="decimal" required />
+        <span class="field-error" id="setupBalanceError"></span>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Get started</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP SHELL
+============================================================ -->
+<div id="app" class="app hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">RM</div>
+      <span class="brand-text">Rolence</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-view="dashboard">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z" fill="currentColor"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-view="transactions">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Transactions</span>
+      </button>
+      <button class="nav-item" data-view="analytics">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 19V9m6 10V4m6 15v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Analytics</span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2"/><path d="M19.4 13a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V19a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 17.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.69 13 1.65 1.65 0 0 0 3.18 12H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 7 1.65 1.65 0 0 0 4.27 5.18l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 2.6a1.65 1.65 0 0 0 1-1.51V1a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 7a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="2"/></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark mode (D)">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        <span class="theme-label">Dark mode</span>
+      </button>
+      <div class="sidebar-profile" id="sidebarProfile" title="Open profile settings">
+        <div class="profile-avatar" id="profileAvatar">
+          <span class="avatar-initial" id="profileAvatarInitial">R</span>
+          <img class="avatar-photo hidden" id="profileAvatarPhoto" alt="" />
+        </div>
+        <div class="profile-meta">
+          <span class="profile-name" id="profileName">Rolence</span>
+          <span class="profile-sub">View profile</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- SIDEBAR OVERLAY FOR MOBILE -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <div class="topbar-greeting">
+        <h2 id="greetingText">Hello, Rolence 👋</h2>
+        <p>Welcome back to your financial dashboard</p>
+      </div>
+
+      <div class="topbar-meta">
+        <div class="meta-pill" id="dateTimePill">
+          <svg viewBox="0 0 24 24" fill="none" class="meta-icon"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span id="currentDate">—</span>
+          <span class="meta-dot">•</span>
+          <span id="currentTime">—</span>
+        </div>
+        <button class="icon-btn" id="addExpenseTopBtn" title="Add expense (N)">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+        <button class="topbar-avatar" id="topbarAvatarBtn" title="Profile & settings">
+          <span class="avatar-initial" id="topbarAvatarInitial">R</span>
+          <img class="avatar-photo hidden" id="topbarAvatarPhoto" alt="" />
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================== DASHBOARD VIEW ===================== -->
+    <section class="view active" id="view-dashboard">
+
+      <div class="dashboard-grid">
+
+        <!-- Signature: Virtual Balance Card -->
+        <div class="balance-card-wrap">
+          <div class="balance-card" id="balanceCard">
+            <div class="balance-card-glow"></div>
+            <div class="balance-card-top">
+              <span class="card-bank">ROLENCE BANK</span>
+              <svg class="card-chip" viewBox="0 0 48 36" fill="none"><rect x="0.5" y="0.5" width="47" height="35" rx="6" fill="url(#chipGrad)" stroke="#D9B968" /><path d="M0 12h47M0 24h47M16 0v36M32 0v36" stroke="#9A7B2E" stroke-width="0.6"/><defs><linearGradient id="chipGrad" x1="0" y1="0" x2="48" y2="36"><stop stop-color="#F4E2A1"/><stop offset="1" stop-color="#D9B968"/></linearGradient></defs></svg>
+            </div>
+            <div class="balance-card-mid">
+              <span class="balance-label">Current balance</span>
+              <span class="balance-amount" id="balanceAmount">TZS 0</span>
+            </div>
+            <div class="balance-card-bottom">
+              <div class="card-number" id="cardNumber">•••• •••• •••• 0000</div>
+              <div class="card-holder">
+                <span class="card-holder-label">Card holder</span>
+                <span class="card-holder-name" id="cardHolderName">ROLENCE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stat-cards">
+          <div class="stat-card" data-stat="spent">
+            <div class="stat-icon stat-icon-red">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7 7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Total spent</span>
+              <span class="stat-value" id="statTotalSpent">TZS 0</span>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="count">
+            <div class="stat-icon stat-icon-secondary">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Transactions</span>
+              <span class="stat-value" id="statTransactionCount">0</span>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="largest">
+            <div class="stat-icon stat-icon-gold">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.6 6.6L22 9.3l-5 4.9 1.2 7-6.2-3.6L5.8 21l1.2-7-5-4.9 7.4-.7L12 2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Largest expense</span>
+              <span class="stat-value" id="statLargestExpense">TZS 0</span>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="avg">
+            <div class="stat-icon stat-icon-green">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Avg. per transaction</span>
+              <span class="stat-value" id="statAvgExpense">TZS 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="panel chart-panel">
+          <div class="panel-header">
+            <h3>Spending by category</h3>
+          </div>
+          <div class="chart-box">
+            <canvas id="categoryPieChart"></canvas>
+          </div>
+          <div class="chart-empty hidden" id="pieEmpty">Add an expense to see the breakdown.</div>
+        </div>
+
+        <div class="panel chart-panel">
+          <div class="panel-header">
+            <h3>Spending trend</h3>
+            <span class="panel-sub">Last 7 days</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="trendBarChart"></canvas>
+          </div>
+          <div class="chart-empty hidden" id="trendEmpty">No spending recorded yet.</div>
+        </div>
+
+        <!-- Recent transactions -->
+        <div class="panel recent-panel">
+          <div class="panel-header">
+            <h3>Recent transactions</h3>
+            <button class="link-btn" data-view-link="transactions">View all</button>
+          </div>
+          <div id="recentList" class="recent-list"></div>
+          <div class="empty-state hidden" id="dashboardEmptyState">
+            <svg viewBox="0 0 64 64" fill="none" class="empty-illustration"><rect x="10" y="16" width="44" height="34" rx="4" stroke="currentColor" stroke-width="2"/><path d="M10 26h44" stroke="currentColor" stroke-width="2"/><circle cx="32" cy="38" r="6" stroke="currentColor" stroke-width="2"/><path d="M32 35v6M29 38h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <p>No transactions yet.<br>Start tracking your expenses.</p>
+            <button class="btn btn-primary" id="emptyStateAddBtn">Add your first expense</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===================== TRANSACTIONS VIEW ===================== -->
+    <section class="view" id="view-transactions">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>All transactions</h3>
+          <button class="btn btn-primary btn-sm" id="addExpenseBtn">+ Add expense</button>
+        </div>
+
+        <div class="table-toolbar">
+          <div class="search-field">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input type="text" id="searchInput" placeholder="Search transactions… (press /)" />
+          </div>
+          <select id="categoryFilter" class="select-field">
+            <option value="all">All categories</option>
+          </select>
+          <select id="sortField" class="select-field">
+            <option value="date-desc">Date (newest)</option>
+            <option value="date-asc">Date (oldest)</option>
+            <option value="amount-desc">Amount (high to low)</option>
+            <option value="amount-asc">Amount (low to high)</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Expense</th>
+                <th>Category</th>
+                <th class="th-amount">Amount</th>
+                <th class="th-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody"></tbody>
+          </table>
+          <div class="empty-state hidden" id="tableEmptyState">
+            <svg viewBox="0 0 64 64" fill="none" class="empty-illustration"><rect x="10" y="16" width="44" height="34" rx="4" stroke="currentColor" stroke-width="2"/><path d="M10 26h44" stroke="currentColor" stroke-width="2"/><circle cx="32" cy="38" r="6" stroke="currentColor" stroke-width="2"/><path d="M32 35v6M29 38h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <p>No transactions yet.<br>Start tracking your expenses.</p>
+          </div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </section>
+
+    <!-- ===================== ANALYTICS VIEW ===================== -->
+    <section class="view" id="view-analytics">
+      <div class="dashboard-grid">
+        <div class="panel chart-panel chart-panel-wide">
+          <div class="panel-header">
+            <h3>Monthly expense analysis</h3>
+            <span class="panel-sub" id="monthlyChartSub">Current year</span>
+          </div>
+          <div class="chart-box chart-box-tall">
+            <canvas id="monthlyBarChart"></canvas>
+          </div>
+        </div>
+        <div class="panel chart-panel">
+          <div class="panel-header"><h3>Spending by category</h3></div>
+          <div class="chart-box">
+            <canvas id="categoryPieChart2"></canvas>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>Category breakdown</h3></div>
+          <div id="categoryBreakdownList" class="category-breakdown"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== SETTINGS VIEW ===================== -->
+    <section class="view" id="view-settings">
+      <div class="settings-grid">
+
+        <div class="panel">
+          <div class="panel-header"><h3>Profile</h3></div>
+
+          <div class="profile-photo-row">
+            <div class="profile-photo-preview" id="settingsAvatarPreview">
+              <span class="avatar-initial" id="settingsAvatarInitial">R</span>
+              <img class="avatar-photo hidden" id="settingsAvatarPhoto" alt="Profile photo" />
+            </div>
+            <div class="profile-photo-actions">
+              <div class="profile-photo-buttons">
+                <button type="button" class="btn btn-secondary btn-sm" id="uploadPhotoBtn">Upload photo</button>
+                <button type="button" class="btn btn-ghost btn-sm hidden" id="removePhotoBtn">Remove photo</button>
+              </div>
+              <input type="file" id="photoFileInput" accept="image/*" hidden />
+              <span class="field-hint">JPG or PNG. It's cropped to a square and resized automatically.</span>
+            </div>
+          </div>
+
+          <form id="profileForm" class="settings-form">
+            <div class="field">
+              <label for="profileNameInput">Display name</label>
+              <input type="text" id="profileNameInput" required />
+            </div>
+            <div class="field">
+              <label for="profileBalanceInput">Initial balance (TZS)</label>
+              <input type="number" id="profileBalanceInput" min="0" step="1" required />
+              <span class="field-hint">Changing this recalculates your current balance using existing expenses.</span>
+            </div>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3>Appearance</h3></div>
+          <div class="settings-row">
+            <div>
+              <strong>Dark mode</strong>
+              <p>Switch between light and dark themes.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="darkModeSwitch" />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3>Data &amp; backup</h3></div>
+          <div class="settings-actions">
+            <button class="btn btn-secondary" id="exportCsvBtn">Export CSV</button>
+            <button class="btn btn-secondary" id="exportJsonBtn">Export JSON</button>
+            <button class="btn btn-secondary" id="importJsonBtn">Import JSON backup</button>
+            <input type="file" id="importJsonInput" accept="application/json" hidden />
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><h3>Keyboard shortcuts</h3></div>
+          <ul class="shortcut-list">
+            <li><kbd>N</kbd><span>Add new expense</span></li>
+            <li><kbd>/</kbd><span>Focus search</span></li>
+            <li><kbd>D</kbd><span>Toggle dark mode</span></li>
+            <li><kbd>Esc</kbd><span>Close dialog</span></li>
+          </ul>
+        </div>
+
+        <div class="panel panel-danger">
+          <div class="panel-header"><h3>LOG OUT</h3></div>
+          <div class="settings-row">
+            <div>
+              <strong>Log out</strong>
+              <p>Return to the login page. Your data will be preserved.</p>
+            </div>
+            <button class="btn btn-secondary" id="logoutBtn">Log out</button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <strong>Clear all data</strong>
+              <p>Permanently deletes your profile and every transaction from this browser.</p>
+            </div>
+            <button class="btn btn-danger" id="clearAllBtn">Clear all data</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     ADD / EDIT EXPENSE MODAL
+============================================================ -->
+<div class="modal-overlay" id="expenseModalOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle">
+    <div class="modal-header">
+      <h3 id="expenseModalTitle">Add expense</h3>
+      <button class="modal-close" id="expenseModalClose" aria-label="Close">&times;</button>
+    </div>
+    <form id="expenseForm" class="modal-form" novalidate>
+      <input type="hidden" id="expenseId" />
+      <div class="field">
+        <label for="expenseName">Expense name</label>
+        <input type="text" id="expenseName" placeholder="e.g. Grocery shopping" required />
+        <span class="field-error" id="expenseNameError"></span>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="expenseCategory">Category</label>
+          <select id="expenseCategory" required>
+            <option value="" disabled selected>Select category</option>
+            <option value="Food">Food</option>
+            <option value="Transport">Transport</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Education">Education</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Utilities">Utilities</option>
+            <option value="Health">Health</option>
+            <option value="Savings">Savings</option>
+            <option value="Other">Other</option>
+          </select>
+          <span class="field-error" id="expenseCategoryError"></span>
+        </div>
+        <div class="field">
+          <label for="expenseAmount">Amount (TZS)</label>
+          <input type="number" id="expenseAmount" placeholder="0" min="0.01" step="0.01" required />
+          <span class="field-error" id="expenseAmountError"></span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="expenseDate">Date</label>
+        <input type="date" id="expenseDate" required />
+        <span class="field-error" id="expenseDateError"></span>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="expenseResetBtn">Reset form</button>
+        <button type="submit" class="btn btn-primary" id="expenseSubmitBtn">Add expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     CONFIRM DIALOG (delete / clear all)
+============================================================ -->
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal modal-small" role="alertdialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 id="confirmModalTitle">Are you sure?</h3>
+    </div>
+    <p class="modal-message" id="confirmModalMessage">This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="confirmCancelBtn">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirmAcceptBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-content">
+    <span class="footer-text">Coded with love <span class="heart">❤️ Encom</span> @ <span id="footerYear">2026 </span></span>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
